@@ -1,4 +1,4 @@
-# ReplicateAI
+# ReplicateAI (WIP)
 AI profle replication for twitter, instagram etc.
 # Part 1 
 Scrape the data of the person you want to replicate from the desired social media.
