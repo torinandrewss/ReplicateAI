@@ -6,13 +6,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time, urllib.request, requests
 import json
+from PIL import Image
 
 PATH = "/Users/torinandrews/Desktop/code projects/reLiveAI/src/chromedriver"
-USERNAME = input("Your Username: ")
-PASS = input("Your Password: ")
-ACCOUNT = input("Account to copy (username): ")
-
-
 
 driver = webdriver.Chrome(PATH)
 
@@ -80,6 +76,7 @@ def get_captions_and_alt_from_posts(posts):
     '''
     captions = []
     alt_text = []
+    src_list=[]
     for link in posts:
         driver.get(link)
         time.sleep(2)
@@ -88,18 +85,21 @@ def get_captions_and_alt_from_posts(posts):
             captions.append(caption.text)
 
             images = driver.find_elements(by=By.TAG_NAME, value="img")
-            for img in images:
+            for i, img in enumerate(images):
                 if img.get_attribute('sizes')!='':
                     # Because selenium cant find 'alt' tag I have to do outerHTML
                     # And then pass to a string strip function
                     text = img.get_attribute('outerHTML')
+                    src = img.get_attribute('src')
+                    src_list.append(src)
                     element = extract_alt_from_img_tag(text)
+
                     if element not in alt_text:
                         alt_text.append(element)
         except:
             continue
 
-    return alt_text,captions
+    return alt_text,captions,src_list
     
 
 def extract_alt_from_img_tag(string):
@@ -143,7 +143,30 @@ def export_as_training_data(dict,output_path,append=False):
             f.write(json_record + '\n')
 
     print('Wrote {} records to {}'.format(len(data), output_path))
-   
+
+def crop_center(pil_img, crop_width, crop_height):
+    # Helper Function
+    img_width, img_height = pil_img.size
+    return pil_img.crop(((img_width - crop_width) // 2,
+                         (img_height - crop_height) // 2,
+                         (img_width + crop_width) // 2,
+                         (img_height + crop_height) // 2))
+
+def crop_max_square(pil_img):
+    #Helper Function
+    return crop_center(pil_img, min(pil_img.size), min(pil_img.size))
+
+def get_image_and_parse(imgSrcList):
+    """
+    Gets the image from the page and formats it properly for image variation generation
+    """
+    for i in range(len(imgSrcList)):
+        urllib.request.urlretrieve(imgSrcList[i],"data/images/img{}.png".format(i))
+        im = Image.open(f"data/images/img{i}.png")
+        new_im = crop_max_square(im)
+        new_im.save(f"data/images/img{i}.png",quality=90)
+
+
 
 
 
@@ -153,10 +176,14 @@ def main():
     switch_window()
     posts = scroll_and_get_posts()
     x = get_captions_and_alt_from_posts(posts)
+    get_image_and_parse(x[2])
     export_as_training_data(to_dict(x[0],x[1]),"data/data.json")
 
 
-
-main()
-time.sleep(5)
-driver.quit()
+if ("__name__" == "__main__"):
+    USERNAME = input("Your Username: ")
+    PASS = input("Your Password: ")
+    ACCOUNT = input("Account to copy (username): ")
+    main()
+    time.sleep(5)
+    driver.quit()
