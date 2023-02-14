@@ -3,7 +3,7 @@ import openai
 import json
 import random
 import requests
-from secret import key
+from secret import key,engine
 
 
 openai.api_key = key
@@ -41,10 +41,10 @@ def generateCaptions():
     Returns a string
     """
     prompt = comps[random.randint(1,len(comps)-1)]
-    int = random.randint(3,7)*0.1
+    int = random.randint(9,12)*0.1
  
     response = openai.Completion.create(
-    engine="curie:ft-personal:torinbot-2023-02-06-03-56-40",
+    engine=engine,
     prompt=prompt,
     temperature=int,
     max_tokens=64
