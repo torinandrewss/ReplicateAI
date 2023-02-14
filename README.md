@@ -13,4 +13,5 @@ Generate the content for the new profile using the fine-tuned AI
 # Part 3
 Make a bot to auto upload the content.
 
-
+Here's a link to the instagram this bot is generating:
+https://www.instagram.com/torinbot/
